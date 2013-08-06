@@ -1,0 +1,23 @@
+{
+    "name": "waavi/mailman",
+    "description": "",
+    "authors": [
+        {
+            "name": "Waavi",
+            "email": "info@waavi.es"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.0",
+        "illuminate/support": "4.0.x"
+    },
+    "autoload": {
+        "classmap": [
+            "src/migrations"
+        ],
+        "psr-0": {
+            "Waavi\\Mailman": "src/"
+        }
+    },
+    "minimum-stability": "dev"
+}
