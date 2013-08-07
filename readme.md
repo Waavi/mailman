@@ -28,7 +28,7 @@ In app/config/app.php, add the following entry to the providers array:
 
 And to the aliases array:
 
-	'Mailman'					=> 'Waavi\Mailman\Facades\Facade',
+	'Mailman' => 'Waavi\Mailman\Facades\Facade',
 
 ## Usage
 
