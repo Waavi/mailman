@@ -143,12 +143,12 @@ class Mailman {
 		$currentLocale 	= $this->app['translator']->getLocale();
 		$newLocale 			= $this->locale ?: $this->app['translator']->getLocale();
 
-		$this->app->setLocale($newLocale);
+		$this->app['translator']->setLocale($newLocale);
 
 		$html 					= $this->app['view']->make($this->view, $this->data)->render();
 		$css 						= $this->app['files']->get($this->cssFile);
 
-		$this->app->setLocale($currentLocale);
+		$this->app['translator']->setLocale($currentLocale);
 
 		$inliner 				= new CssInline($html, $css);
 		return $inliner->convert();
