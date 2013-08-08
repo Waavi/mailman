@@ -123,6 +123,7 @@ class Mailman {
 		} else {
 			$this->data[$key] = $value;
 		}
+		return $this;
 	}
 
 	/**
