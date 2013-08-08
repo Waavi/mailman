@@ -1,8 +1,10 @@
 <?php namespace Waavi\Mailman;
 
 use Swift_Message;
-use TijsVerkoyen\CssToInlineStyles\CssToInlineStyles as CssInline;
+use Illuminate\Queue\QueueManager;
+use Illuminate\Log\Writer;
 use Illuminate\Mail\Message;
+use TijsVerkoyen\CssToInlineStyles\CssToInlineStyles as CssInline;
 
 class Mailman {
 
@@ -57,6 +59,13 @@ class Mailman {
 	protected $logger;
 
 	/**
+	 * The queue manager instance.
+	 *
+	 * @var \Illuminate\Queue\QueueManager
+	 */
+	protected $queue;
+
+	/**
 	 * Indicates if the actual sending is disabled.
 	 *
 	 * @var bool
@@ -74,9 +83,13 @@ class Mailman {
 		$this->swift 			= $this->app['swift.mailer'];
 		$this->message 		= new Message(new Swift_Message);
 		$this->cssFolder 	= $this->app['path.public'].$app['config']['waavi/mailman::css.folder'];
-		$this->setCss($app['config']['waavi/mailman::css.file']);
 		$this->data 			= array();
 		$this->locale 		= null;
+		$this->pretending = $this->app['config']['mail.pretend'];
+
+		$this->setCss($app['config']['waavi/mailman::css.file']);
+		$this->setQueue($app['queue']);
+		$this->setLogger($app['log']);
 		// Set from:
 		if (is_array($app['config']['mail.from']) && isset($app['config']['mail.from']['address'])) {
 			$this->from($app['config']['mail.from']['address'], $app['config']['mail.from']['name']);
@@ -168,7 +181,32 @@ class Mailman {
 	public function send($message = null)
 	{
 		$message = $message ?: $this->getMessageForSending();
-		return $this->swift->send($message);
+		return $this->pretending ? $this->logMessage($message) : $this->swift->send($message);
+	}
+
+	/**
+	 * Set the log writer instance.
+	 *
+	 * @param  \Illuminate\Log\Writer  $logger
+	 * @return \Illuminate\Mail\Mailer
+	 */
+	public function setLogger(Writer $logger)
+	{
+		$this->logger = $logger;
+		return $this;
+	}
+
+	/**
+	 * Log that a message was sent.
+	 *
+	 * @param  Swift_Message  $message
+	 * @return void
+	 */
+	protected function logMessage($message)
+	{
+		$emails = implode(', ', array_keys($message->getTo()));
+
+		$this->logger->info("Pretending to mail message to: {$emails}");
 	}
 
 	/**
