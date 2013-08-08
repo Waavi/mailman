@@ -224,25 +224,19 @@ class Mailman {
 	/**
 	 * Queue a new e-mail message for sending.
 	 *
-	 * @param  string|array  $view
-	 * @param  array   $data
-	 * @param  Closure|string  $callback
 	 * @param  string  $queue
 	 * @return void
 	 */
 	public function queue($queue = null)
 	{
 		if ($this->queue) {
-			$this->queue->push('mailman@handleQueuedMessage', array('message', $this->getMessageForSending()), $queue);
+			$this->queue->push('mailman@handleQueuedMessage', array('message' => serialize($this->getMessageForSending())), $queue);
 		}
 	}
 
 	/**
 	 * Queue a new e-mail message for sending on the given queue.
 	 *
-	 * @param  string|array  $view
-	 * @param  array   $data
-	 * @param  Closure|string  $callback
 	 * @param  string  $queue
 	 * @return void
 	 */
@@ -255,16 +249,13 @@ class Mailman {
 	 * Queue a new e-mail message for sending after (n) seconds.
 	 *
 	 * @param  int  $delay
-	 * @param  string|array  $view
-	 * @param  array  $data
-	 * @param  Closure|string  $callback
 	 * @param  string  $queue
 	 * @return void
 	 */
 	public function later($delay, $queue = null)
 	{
 		if ($this->queue) {
-			$this->queue->later($delay, 'mailman@handleQueuedMessage', array('message', $this->getMessageForSending()), $queue);
+			$this->queue->later($delay, 'mailman@handleQueuedMessage', array('message' => serialize($this->getMessageForSending())), $queue);
 		}
 	}
 
@@ -273,9 +264,6 @@ class Mailman {
 	 *
 	 * @param  string  $queue
 	 * @param  int  $delay
-	 * @param  string|array  $view
-	 * @param  array  $data
-	 * @param  Closure|string  $callback
 	 * @return void
 	 */
 	public function laterOn($queue, $delay)
@@ -292,7 +280,10 @@ class Mailman {
 	 */
 	public function handleQueuedMessage($job, $data)
 	{
-		$this->send($data['message']);
+		if (is_array($data) && isset($data['message']) && $data['message']) {
+			$message = unserialize($data['message']);
+			$this->send($message);
+		}
 		$job->delete();
 	}
 
