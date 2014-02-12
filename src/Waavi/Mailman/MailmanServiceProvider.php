@@ -28,7 +28,7 @@ class MailmanServiceProvider extends ServiceProvider {
 	 */
 	public function register()
 	{
-		$this->app['mailman'] = $this->app->share(function($app)
+		$this->app->bind('mailman', function($app)
 		{
 			return new Mailman($app);
 		});
