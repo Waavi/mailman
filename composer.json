@@ -1,6 +1,7 @@
 {
     "name": "waavi/mailman",
-    "description": "",
+    "version":  "1.0",
+    "description": "Easier email sending for Laravel",
     "authors": [
         {
             "name": "Waavi",

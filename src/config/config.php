@@ -12,7 +12,7 @@ return array(
 		| Path relative to the public folder in which email stylesheets are stored.
 		|
 		*/
-		'folder'	=>	'/assets/css',
+		'folder'	=>	'/assets/css/emails',
 
 		/*
 		|--------------------------------------------------------------------------

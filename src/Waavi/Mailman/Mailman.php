@@ -5,6 +5,11 @@ use Illuminate\Queue\QueueManager;
 use Illuminate\Log\Writer;
 use Illuminate\Mail\Message;
 use TijsVerkoyen\CssToInlineStyles\CssToInlineStyles as CssInline;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Lang;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\File;
+use \App;
 
 class Mailman {
 
@@ -77,36 +82,36 @@ class Mailman {
 	 *	@param \Illuminate\Foundation\Application $app
 	 *	@param string Path to the css file relative to the css folder as specified in config.php.
 	 */
-	public function __construct($app)
+	public function __construct()
 	{
-		$this->app 				= $app;
-		$this->swift 			= $this->app['swift.mailer'];
+		//$this->swift 			= App::make('swift.mailer');
 		$this->message 		= new Message(new Swift_Message);
-		$this->cssFolder 	= $this->app['path.public'].$app['config']['waavi/mailman::css.folder'];
+		$this->cssFolder 	= App::make('path.public').Config::get('waavi/mailman::css.folder');
 		$this->data 			= array();
 		$this->locale 		= null;
-		$this->pretending = $this->app['config']['mail.pretend'];
-
-		$this->setCss($app['config']['waavi/mailman::css.file']);
-		$this->setQueue($app['queue']);
-		$this->setLogger($app['log']);
+		$this->pretending = Config::get('mail.pretend');
+		$this->setCss('zurb.css');
+		$this->setQueue(App::make('queue'));
+		$this->setLogger(App::make('log'));
 		// Set from:
-		if (is_array($app['config']['mail.from']) && isset($app['config']['mail.from']['address'])) {
-			$this->from($app['config']['mail.from']['address'], $app['config']['mail.from']['name']);
+		if (Config::get('mail.from.address')) {
+			$this->from(Config::get('mail.from.address'), Config::get('mail.from.address.name'));
 		}
 	}
 
 	/**
 	 *	Create a new Mailman instance.
+	 *
 	 *	@param string 	$view 	View name.
 	 *	@param string   $css 		Css filename or path inside the css folder.
-	 *	@return Waavi\Mailman\Mailman current object instance, allows for method chaining.
+	 *	@return Waavi\Mailman current object instance, allows for method chaining.
 	 */
-	public function make($view, $data = null)
+	public static function make($view, $data = null)
 	{
-		$this->view = $view;
-		$this->data = $data ?: array();
-		return $this;
+		$mailer = new static;
+		$mailer->view = $view;
+		$mailer->data = $data ?: [];
+		return $mailer;
 	}
 
 	/**
@@ -129,7 +134,7 @@ class Mailman {
 	/**
 	 *	Set the message locale.
 	 *	@param string $locale
-	 *	@return Waavi\Mailman\Mailman current object instance, allows for method chaining.
+	 *	@return Waavi\Mailman current object instance, allows for method chaining.
 	 */
 	public function setLocale($locale)
 	{
@@ -140,7 +145,7 @@ class Mailman {
 	/**
 	 *	Set the css file to use.
 	 *	@param string   $css 	Css filename or path inside the css folder.
-	 *	@return Waavi\Mailman\Mailman current object instance, allows for method chaining.
+	 *	@return Waavi\Mailman current object instance, allows for method chaining.
 	 */
 	public function setCss($css)
 	{
@@ -154,20 +159,28 @@ class Mailman {
 	 */
 	public function show()
 	{
-		$currentLocale 	= $this->app['translator']->getLocale();
-		$newLocale 			= $this->locale ?: $this->app['translator']->getLocale();
+		// Set the email's locale:
+		$currentLocale 	= Lang::getLocale();
+		$newLocale 			= $this->locale ?: Lang::getLocale();
+		Lang::setLocale($newLocale);
 
-		$this->app['translator']->setLocale($newLocale);
-
-		$html 					= $this->app['view']->make($this->view, $this->data)->render();
-		$css 						= $this->app['files']->get($this->cssFile);
-
-		$this->app['translator']->setLocale($currentLocale);
-
+		// Generate HTML:
+		$html 					= View::make($this->view, $this->data)->render();
+		$css 						= File::get($this->cssFile);
 		$inliner 				= new CssInline($html, $css);
-		return $inliner->convert();
+		$body 					= $inliner->convert();
+
+		// Return App locale to former value:
+		Lang::setLocale($currentLocale);
+
+		return $body;
 	}
 
+	/**
+	 *	Get the Swift Message required to send an email.
+	 *
+	 *	@return Message
+	 */
 	protected function getMessageForSending()
 	{
 		$message 	= $this->message->getSwiftMessage();
@@ -182,7 +195,8 @@ class Mailman {
 	public function send($message = null)
 	{
 		$message = $message ?: $this->getMessageForSending();
-		return $this->pretending ? $this->logMessage($message) : $this->swift->send($message);
+		$mailer = App::make('mailer')->getSwiftMailer();
+		return $this->pretending ? $this->logMessage($message) : $mailer->send($message);
 	}
 
 	/**
@@ -293,7 +307,7 @@ class Mailman {
 	 *	Route calls to these functions to the current Message object.
 	 *	@param string $name Illuminate\Mail\Message method
 	 *	@param mixed $arguments array or string of arguments.
-	 *	@return Waavi\Mailman\Mailman current object instance, allows for method chaining.
+	 *	@return Waavi\Mailman current object instance, allows for method chaining.
 	 */
 	public function __call($name, $arguments)
 	{

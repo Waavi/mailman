@@ -30,7 +30,7 @@ class MailmanServiceProvider extends ServiceProvider {
 	{
 		$this->app->bind('mailman', function($app)
 		{
-			return new Mailman($app);
+			return new Mailman;
 		});
 	}
 
