@@ -22,6 +22,6 @@ return array(
 		| Default stylesheet for emails.
 		|
 		*/
-		'file'		=>	'email.css',
+		'file'		=>	'zurb.css',
 	),
 );

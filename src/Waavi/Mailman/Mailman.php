@@ -90,7 +90,7 @@ class Mailman {
 		$this->data 			= array();
 		$this->locale 		= null;
 		$this->pretending = Config::get('mail.pretend');
-		$this->setCss('zurb.css');
+		$this->setCss(Config::get('waavi/mailman::css.file'));
 		$this->setQueue(App::make('queue'));
 		$this->setLogger(App::make('log'));
 		// Set from:
