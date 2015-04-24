@@ -87,11 +87,11 @@ class Mailman {
 	{
 		//$this->swift 			= App::make('swift.mailer');
 		$this->message 		= new Message(new Swift_Message);
-		$this->cssFolder 	= App::make('path.public').Config::get('waavi/mailman::css.folder');
+		$this->cssFolder 	= App::make('path.public').Config::get('nexogy/mailman::css.folder');
 		$this->data 			= array();
 		$this->locale 		= null;
 		$this->pretending = Config::get('mail.pretend');
-		$this->setCss(Config::get('waavi/mailman::css.file'));
+		$this->setCss(Config::get('nexogy/mailman::css.file'));
 		$this->setQueue(App::make('queue'));
 		$this->setLogger(App::make('log'));
 		// Set from:
