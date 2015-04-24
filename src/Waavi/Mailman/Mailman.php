@@ -195,6 +195,7 @@ class Mailman {
 	public function send($message = null)
 	{
 		$message = $message ?: $this->getMessageForSending();
+        Event::fire('mailer.sending', array($message));
 		$mailer = App::make('mailer')->getSwiftMailer();
 		return $this->pretending ? $this->logMessage($message) : $mailer->send($message);
 	}
