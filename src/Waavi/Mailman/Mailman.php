@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\File;
 use \App;
+use Illuminate\Support\Facades\Event;
 
 class Mailman {
 
