@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\File;
 use \App;
+use Illuminate\Support\Facades\Event;
 
 class Mailman {
 
@@ -195,6 +196,7 @@ class Mailman {
 	public function send($message = null)
 	{
 		$message = $message ?: $this->getMessageForSending();
+        Event::fire('mailer.sending', array($message));
 		$mailer = App::make('mailer')->getSwiftMailer();
 		return $this->pretending ? $this->logMessage($message) : $mailer->send($message);
 	}
