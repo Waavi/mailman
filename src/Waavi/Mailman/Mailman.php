@@ -95,7 +95,7 @@ class Mailman {
 		$this->setLogger(App::make('log'));
 		// Set from:
 		if (Config::get('mail.from.address')) {
-			$this->from(Config::get('mail.from.address'), Config::get('mail.from.address.name'));
+			$this->from(Config::get('mail.from.address'), Config::get('mail.from.name'));
 		}
 	}
 
