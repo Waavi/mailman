@@ -203,7 +203,7 @@ class Mailman {
 			Event::fire('mailer.sent', array($message, $response));
 			return $response;
 		} else {
-			$this->logMessage($message);
+			return $this->logMessage($message);
 		}
 	}
 
