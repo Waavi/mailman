@@ -198,7 +198,13 @@ class Mailman {
 		$message = $message ?: $this->getMessageForSending();
         Event::fire('mailer.sending', array($message));
 		$mailer = App::make('mailer')->getSwiftMailer();
-		return $this->pretending ? $this->logMessage($message) : $mailer->send($message);
+		if(!$this->pretending) {
+			$response = $mailer->send($message);
+			Event::fire('mailer.sent', array($message, $response));
+			return $response;
+		} else {
+			$this->logMessage($message);
+		}
 	}
 
 	/**
