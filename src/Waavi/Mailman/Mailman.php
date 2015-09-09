@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\File;
 use \App;
+use Illuminate\Support\Facades\Event;
 
 class Mailman {
 
@@ -86,11 +87,11 @@ class Mailman {
 	{
 		//$this->swift 			= App::make('swift.mailer');
 		$this->message 		= new Message(new Swift_Message);
-		$this->cssFolder 	= App::make('path.public').Config::get('waavi/mailman::css.folder');
+		$this->cssFolder 	= App::make('path.public').Config::get('nexogy/mailman::css.folder');
 		$this->data 			= array();
 		$this->locale 		= null;
 		$this->pretending = Config::get('mail.pretend');
-		$this->setCss(Config::get('waavi/mailman::css.file'));
+		$this->setCss(Config::get('nexogy/mailman::css.file'));
 		$this->setQueue(App::make('queue'));
 		$this->setLogger(App::make('log'));
 		// Set from:
@@ -195,8 +196,15 @@ class Mailman {
 	public function send($message = null)
 	{
 		$message = $message ?: $this->getMessageForSending();
+        Event::fire('mailer.sending', array($message));
 		$mailer = App::make('mailer')->getSwiftMailer();
-		return $this->pretending ? $this->logMessage($message) : $mailer->send($message);
+		if(!$this->pretending) {
+			$response = $mailer->send($message);
+			Event::fire('mailer.sent', array($message, $response));
+			return $response;
+		} else {
+			return $this->logMessage($message);
+		}
 	}
 
 	/**
