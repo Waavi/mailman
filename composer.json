@@ -1,24 +1,45 @@
 {
     "name": "waavi/mailman",
-    "version":  "2.0",
-    "description": "Easier email sending for Laravel",
+    "description": "Easier email sending for Laravel 5 with CSS inlining.",
+    "keywords": [
+        "waavi",
+        "laravel",
+        "email",
+        "mailman",
+        "mailer",
+    ],
+    "license": "MIT",
     "authors": [
         {
             "name": "Waavi",
-            "email": "info@waavi.com"
+            "email": "info@waavi.com",
+            "homepage": "http://waavi.com"
         }
     ],
     "require": {
-        "php": ">=5.3.0",
         "tijsverkoyen/css-to-inline-styles": "1.*",
-        "illuminate/support": "~5.0|~5.1",
-        "illuminate/queue": "~5.0|~5.1",
-        "illuminate/mail": "~5.0|~5.1",
+        "illuminate/view": "5.0.x|5.1.x",
+        "illuminate/support": "5.0.x|5.1.x",
+        "illuminate/queue": "5.0.x|5.1.x",
+        "illuminate/mail": "5.0.x|5.1.x"
+    },
+    "require-dev": {
+        "phpunit/phpunit" : "^4",
+        "orchestra/testbench": "3.1.x",
+        "mockery/mockery": "^0.9.4"
     },
     "autoload": {
-        "psr-0": {
+        "psr-4": {
             "Waavi\\Mailman\\": "src/"
         }
     },
-    "minimum-stability": "dev"
+    "autoload-dev": {
+        "psr-4": {
+            "Waavi\\Mailman\\Test\\": "tests"
+        }
+    },
+    "minimum-stability": "dev",
+    "scripts": {
+        "test": "vendor/bin/phpunit"
+    }
 }
