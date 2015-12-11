@@ -1,25 +1,58 @@
-<?php namespace App\Utils\Mailman;
+<?php namespace Waavi\Mailman;
 
-use Illuminate\Log\Writer;
+use Illuminate\Filesystem\Filesystem;
+use Illuminate\Log\Writer as LogWriter;
 use Illuminate\Mail\Message;
 use Illuminate\Queue\QueueManager;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Lang;
-use Illuminate\Support\Facades\View;
-use Swift_Message;
+use Illuminate\Translation\Translator;
+use Illuminate\View\Factory as ViewFactory;
+use Swift_Mailer;
 use TijsVerkoyen\CssToInlineStyles\CssToInlineStyles as CssInline;
-use \App;
 
-class Mailman
+class Mailer implements MailerContract, MailQueueContract
 {
+    /**
+     *  Swift Mailer
+     *  @var Swift_Mailer
+     */
+    protected $mailer;
 
     /**
-     * The application instance.
-     *
-     * @var \Illuminate\Foundation\Application
+     *  Log Writer used when pretend is set to true.
+     *  @var Illuminate\Log\Writer
      */
-    protected $app;
+    protected $logWriter;
+
+    /**
+     *  Laravel Filsystem
+     *  @var Illuminate\Filesystem\Filesystem
+     */
+    protected $filesystem;
+
+    /**
+     *  Laravel Translator
+     *  @var Illuminate\Translation\Translator
+     */
+    protected $translator;
+
+    /**
+     *  Laravel View Factory
+     *  @var Illuminate\View\Factory
+     */
+    protected $viewFactory;
+
+    /**
+     *    The Message instance.
+     *    @var Illuminate\Mail\Message
+     */
+    protected $message;
+
+    /**
+     * The queue manager instance.
+     *
+     * @var \Illuminate\Queue\QueueManager
+     */
+    protected $queueManager;
 
     /**
      *    Css folder to use. By default this points to the folder specified in config.php
@@ -34,97 +67,69 @@ class Mailman
     protected $cssFile;
 
     /**
-     *    The Illuminate\Mail\Message instance.
-     *    @var array
+     *  The view to load
+     *  @var string
      */
-    protected $message;
+    protected $view;
 
     /**
      *    Data to render the email view.
      *    @var array
      */
-    protected $data;
+    protected $data = [];
 
     /**
      *    Selected locale for the email.
      *    @var string(2)
      */
-    protected $locale;
-
-    /**
-     * The Swift Mailer instance. Configured using app/mail.php
-     * @var Swift_Mailer
-     */
-    protected $swift;
-
-    /**
-     * The log writer instance.
-     *
-     * @var \Illuminate\Log\Writer
-     */
-    protected $logger;
-
-    /**
-     * The queue manager instance.
-     *
-     * @var \Illuminate\Queue\QueueManager
-     */
-    protected $queue;
+    protected $locale = null;
 
     /**
      * Indicates if the actual sending is disabled.
      *
      * @var bool
      */
-    protected $pretending = false;
+    protected $prentend = false;
 
     /**
      *    Mailman constructor.
      *    @param \Illuminate\Foundation\Application $app
      *    @param string Path to the css file relative to the css folder as specified in config.php.
      */
-    public function __construct()
-    {
-        $this->message    = new Message(new Swift_Message);
-        $this->cssFolder  = App::make('path.public') . Config::get('mailman.css.folder');
-        $this->data       = [];
-        $this->locale     = null;
-        $this->pretending = Config::get('mail.pretend');
-        $this->setCss(Config::get('mailman.css.file'));
-        $this->setQueue(App::make('queue'));
-        $this->setLogger(App::make('log'));
-        // Set from:
-        if (Config::get('mail.from.address')) {
-            $this->from(Config::get('mail.from.address'), Config::get('mail.from.address.name'));
-        }
+    public function __construct(
+        Swift_Mailer $mailer,
+        LogWriter    $logWriter,
+        Filesystem   $filesystem,
+        Translator   $translator,
+        ViewFactory  $viewFactory,
+        Message      $message,
+                     $view,
+                     $data,
+                     $locale,
+                     $pretend) {
+        $this->mailer      = $mailer;
+        $this->logWriter   = $logWriter;
+        $this->filesystem  = $filesystem;
+        $this->translator  = $translator;
+        $this->viewFactory = $viewFactory;
+        $this->message     = $message;
+        $this->view        = $view;
+        $this->data        = $data;
+        $this->locale      = $locale;
+        $this->pretend     = $pretend;
     }
 
     /**
-     *    Create a new Mailman instance.
+     * Add data to the view. Works just like Laravel's View::with
      *
-     *    @param string     $view     View name.
-     *    @param string   $css         Css filename or path inside the css folder.
-     *    @return App\Utils\Mailman current object instance, allows for method chaining.
-     */
-    public static function make($view, $data = null)
-    {
-        $mailer       = new static;
-        $mailer->view = $view;
-        $mailer->data = $data ?: [];
-        return $mailer;
-    }
-
-    /**
-     * Add a piece of data to the view.
-     *
-     * @param  string|array  $key
-     * @param  mixed   $value
+     * @param  string|array     $key
+     * @param  mixed            $value
      * @return \Illuminate\View\View
      */
     public function with($key, $value = null)
     {
         if (is_array($key)) {
-            $this->data = array_merge($this->data, $key);
+            $this->data = array_replace_recursive($this->data, $key);
         } else {
             $this->data[$key] = $value;
         }
@@ -132,9 +137,10 @@ class Mailman
     }
 
     /**
-     *    Set the message locale.
-     *    @param string $locale
-     *    @return App\Utils\Mailman current object instance, allows for method chaining.
+     *  Set the locale, by default the current locale will be used.
+     *
+     *  @param string $locale
+     *  @return App\Utils\Mailman current object instance, allows for method chaining.
      */
     public function setLocale($locale)
     {
@@ -143,38 +149,37 @@ class Mailman
     }
 
     /**
-     *    Set the css file to use.
-     *    @param string   $css     Css filename or path inside the css folder.
-     *    @return App\Utils\Mailman current object instance, allows for method chaining.
+     *    Set the css file to use, relative to the css folder.
+     *
+     *    @param string   $css     Css relative path inside the css folder.
+     *    @return Mailman Current object instance, allows for method chaining.
      */
     public function setCss($css)
     {
-        if ($css) {
-            $this->cssFile = $this->cssFolder . '/' . $css;
-        }
-
+        $this->cssFile = $css;
         return $this;
     }
 
     /**
-     *    Return the mail as html.
+     *    Return the HTML representation of the email to be sent.
+     *
      *    @return string
      */
     public function show()
     {
         // Set the email's locale:
-        $currentLocale = Lang::getLocale();
-        $newLocale     = $this->locale ?: Lang::getLocale();
-        Lang::setLocale($newLocale);
+        $currentLocale = $this->translator->getLocale();
+        $locale        = $this->locale ?: $currentLocale;
+        $this->translator->setLocale($locale);
 
         // Generate HTML:
-        $html    = View::make($this->view, $this->data)->render();
-        $css     = File::get($this->cssFile);
+        $html    = $this->viewFactory->make($this->view, $this->data)->render();
+        $css     = $this->filesystem->get($this->cssFile);
         $inliner = new CssInline($html, $css);
         $body    = $inliner->convert();
 
         // Return App locale to former value:
-        Lang::setLocale($currentLocale);
+        $this->translator->setLocale($currentLocale);
 
         return $body;
     }
@@ -198,33 +203,8 @@ class Mailman
     public function send($message = null)
     {
         $message = $message ?: $this->getMessageForSending();
-        $mailer  = App::make('mailer')->getSwiftMailer();
-        return $this->pretending ? $this->logMessage($message) : $mailer->send($message);
-    }
 
-    /**
-     * Set the log writer instance.
-     *
-     * @param  \Illuminate\Log\Writer  $logger
-     * @return \Illuminate\Mail\Mailer
-     */
-    public function setLogger(Writer $logger)
-    {
-        $this->logger = $logger;
-        return $this;
-    }
-
-    /**
-     * Log that a message was sent.
-     *
-     * @param  Swift_Message  $message
-     * @return void
-     */
-    protected function logMessage($message)
-    {
-        $emails = implode(', ', array_keys($message->getTo()));
-
-        $this->logger->info("Pretending to mail message to: {$emails}");
+        return $this->prentend ? $this->logMessage($message) : $this->mailer->send($message);
     }
 
     /**
@@ -233,9 +213,9 @@ class Mailman
      * @param  \Illuminate\Queue\QueueManager  $queue
      * @return \Illuminate\Mail\Mailer
      */
-    public function setQueue(QueueManager $queue)
+    public function setQueueManager(QueueManager $queueManager)
     {
-        $this->queue = $queue;
+        $this->queueManager = $queueManager;
         return $this;
     }
 
@@ -247,8 +227,8 @@ class Mailman
      */
     public function queue($queue = null)
     {
-        if ($this->queue) {
-            $this->queue->push('mailman@handleQueuedMessage', ['message' => serialize($this->getMessageForSending())], $queue);
+        if ($this->queueManager) {
+            $this->queueManager->push('mailman@handleQueuedMessage', ['message' => serialize($this->getMessageForSending())], $queue);
         }
     }
 
@@ -260,7 +240,7 @@ class Mailman
      */
     public function queueOn($queue)
     {
-        return $this->queue($queue);
+        return $this->queueManager($queue);
     }
 
     /**
@@ -272,8 +252,8 @@ class Mailman
      */
     public function later($delay, $queue = null)
     {
-        if ($this->queue) {
-            $this->queue->later($delay, 'mailman@handleQueuedMessage', ['message' => serialize($this->getMessageForSending())], $queue);
+        if ($this->queueManager) {
+            $this->queueManager->later($delay, 'mailman@handleQueuedMessage', ['message' => serialize($this->getMessageForSending())], $queue);
         }
     }
 
@@ -307,7 +287,8 @@ class Mailman
 
     /**
      *    Other functions like to, from, attach, etc... should be implemented through the Illuminate\Mail\Message class.
-     *    Route calls to these functions to the current Message object.
+     *    Route calls these methods on the current Message object.
+     *
      *    @param string $name Illuminate\Mail\Message method
      *    @param mixed $arguments array or string of arguments.
      *    @return App\Utils\Mailman current object instance, allows for method chaining.

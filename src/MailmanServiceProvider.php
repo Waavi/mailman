@@ -34,8 +34,8 @@ class MailmanServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->app->bind('mailman', function ($app) {
-            return new Mailman;
+        $this->app->singleton('mailman', function ($app) {
+            return new MailerFactory($app);
         });
     }
 
