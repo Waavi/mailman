@@ -1,6 +1,5 @@
 {
     "name": "waavi/mailman",
-    "version":  "1.0",
     "description": "Easier email sending for Laravel",
     "authors": [
         {
