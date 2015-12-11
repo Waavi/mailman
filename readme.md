@@ -1,3 +1,10 @@
+# Better email for Laravel 5
+
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/waavi/mailman.svg?style=flat-square)](https://packagist.org/packages/waavi/mailman)
+[![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
+[![Build Status](https://img.shields.io/travis/Waavi/mailman/master.svg?style=flat-square)](https://travis-ci.org/Waavi/mailman)
+[![Total Downloads](https://img.shields.io/packagist/dt/waavi/mailman.svg?style=flat-square)](https://packagist.org/packages/waavi/mailman)
+
 ## Email bundle for Laravel
 
 Mailman has all of Laravel's Mail features, plus allows you to:
@@ -8,45 +15,44 @@ Mailman has all of Laravel's Mail features, plus allows you to:
 
 ## Installation
 
-Edit composer.json:
+Require through composer
+
+	composer require waavi/mailman 2.0.x
+
+Or manually edit your composer.json file:
 
 	"require": {
-		"waavi/mailman": "*"
-	},
-	"repositories": [
-		{
-			"type": "vcs",
-			"url":  "git@github.com:Waavi/mailman.git"
-		}
- 	],
+		"waavi/mailman": "2.0.x"
+	}
 
-In app/config/app.php, add the following entry to the providers array:
+Publish the configuration file:
 
-	'Waavi\Mailman\MailmanServiceProvider',
+	php artisan vendor:publish
+
+In config/app.php, add the following entry to the providers array:
+
+	\Waavi\Mailman\MailmanServiceProvider::class,
 
 And to the aliases array:
 
-	'Mailman' => 'Waavi\Mailman\Facades\Facade',
-
-Publish the configuration files:
-
-	php artisan config:publish waavi/mailman
+	'Mailman' => Waavi\Mailman\Facades\Facade::class,
 
 ## Usage
 
 ### Basic example
+
 Usage is very similar to Laravel's Mail, with no callbacks needed. In fact, Mailman is expected to be used just like you use Views. Say you have an email view in views/emails/email. You may send the email by:
 
 	Mailman::make('emails.email')->to('william@waavi.com')->subject('test')->send();
 
-The from address and general email configuration will be loaded from app/mail.php, whereas email stylesheet configuration is done through the package's config file.
+The from address and general email configuration will be loaded from app/mail.php, whereas email stylesheet configuration is done through the mailman.php config file.
 
 ### Passing data to an email's view
 
 Say you want to pass data to the view, you may do so in two ways: through the make method and the with method, just like in Views:
 
 	Mailman::make('emails.welcome', array('user' => $user))->to('user@example.com')->subject('welcome')->send();
-	Mailman::make('emails.welcome')->with(array('user', $user))->to('user@example.com')->subject('welcome')->send();
+	Mailman::make('emails.welcome')->with(['user', $user])->to('user@example.com')->subject('welcome')->send();
 	Mailman::make('emails.welcome')->with('user', $user)->to('user@example.com')->subject('welcome')->send();
 
 ### Setting the locale
@@ -70,9 +76,9 @@ You may queue emails just like with Laravel's Mail. To send an email through a q
 	Mailman::make('emails.basic')->to...->later(5)                 // Send email after 5 seconds.
 	Mailman::make('emails.basic')->to...->laterOn(5, 'queue_name')
 
-### Fake sending an email
+### Fake sending email
 
-During development, you may not wish for emails to be sent. You may configure the pretend option to true in app/mail.php to log emails instead of sending them.
+If you are using Laravel's Homestead, the recommend way would be to install [MailCatcher](http://blog.bobbyallen.me/2014/10/21/installing-mailcatcher-support-in-laravel-homestead/), however you can also set the pretend option to true in the mail.php config file.
 
 ### Get the email as a string
 
