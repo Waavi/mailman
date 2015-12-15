@@ -1,37 +1,20 @@
 <?php namespace Waavi\Mailman;
 
-use Illuminate\Container\Container;
 use Illuminate\Mail\Message;
 use Illuminate\Queue\QueueManager;
-use Swift_Message;
+use Illuminate\Translation\Translator;
+use Illuminate\View\Factory as ViewFactory;
+use lluminate\Filesystem\Filesystem;
+use \Swift_Mailer;
+use \Swift_Message;
 
 class MailerFactory
 {
-
-    /**
-     * The application instance.
-     *
-     * @var \Illuminate\Foundation\Application
-     */
-    protected $app;
-
-    /**
-     *    Css folder to use. By default this points to the folder specified in config.php
-     *    @var string
-     */
-    protected $cssFolder;
-
     /**
      *    Css file to use. By default this points to the file and folder specified in config.php
      *    @var string
      */
     protected $cssFile;
-
-    /**
-     *    The Illuminate\Mail\Message instance.
-     *    @var array
-     */
-    protected $message;
 
     /**
      *  Default from address
@@ -46,23 +29,17 @@ class MailerFactory
     protected $defaultFromName = null;
 
     /**
-     *    Data to render the email view.
-     *    @var array
-     */
-    protected $data = [];
-
-    /**
      *    Selected locale for the email.
      *    @var string(2)
      */
-    protected $locale = null;
+    protected $defaultLocale = null;
 
     /**
      * The queue manager instance.
      *
      * @var \Illuminate\Queue\QueueManager
      */
-    protected $queue;
+    protected $queueManager;
 
     /**
      * Indicates if the actual sending is disabled.
@@ -72,32 +49,37 @@ class MailerFactory
     protected $prentend = false;
 
     /**
+     *  @var \Swift_Mailer
+     */
+    protected $swiftMailer;
+
+    /**
+     *  @var Illuminate\View\Factory
+     */
+    protected $viewFactory;
+
+    /**
+     *  @var Filesystem
+     */
+    protected $filesystem;
+
+    /**
      *    Mailman constructor.
      *    @param \Illuminate\Foundation\Application $app
      *    @param string Path to the css file relative to the css folder as specified in config.php.
      */
-    public function __construct(Container $app)
+    public function __construct(Config $config, Translator $translator, Filesystem $filesystem, QueueManager $queueManager, Swift_Mailer $swiftMailer, ViewFactory $viewFactory)
     {
-        $this->app = $app;
-        $config    = array_merge($app->make('config')->get('mail'), $app->make('config')->get('mailman'));
-        $this->loadConfig($config);
-        $this->setQueue($app->make('queue'));
-    }
-
-    /**
-     *  Load config file options
-     *
-     *  @param array $config
-     *  @return void
-     */
-    protected function loadConfig(array $config)
-    {
-        $this->prentend = array_get($config, 'pretend', false);
-
-        $this->cssFile = array_get($config, 'cssFile', 'resources/css/email.css');
-
-        $this->defaultFromAddress = array_get($config, 'from.address', null);
-        $this->defaultFromName    = array_get($config, 'from.name', null);
+        $this->prented            = $config->get('mail.pretend');
+        $this->cssFile            = $config->get('mailman.cssFile');
+        $this->defaultFromAddress = $config->get('mail.from.address');
+        $this->defaultFromName    = $config->get('mail.from.name');
+        $this->defaultLocale      = $config->get('app.locale');
+        $this->translator         = $translator;
+        $this->filesystem         = $filesystem;
+        $this->queueManager       = $queueManager;
+        $this->swiftMailer        = $swiftMailer;
+        $this->viewFactory        = $viewFactory;
     }
 
     /**
@@ -109,16 +91,9 @@ class MailerFactory
      */
     public function make($view, $data = null)
     {
-        $message       = new Message(new Swift_Message);
-        $laravelMailer = $this->app->make('mailer')->getSwiftMailer();
-        $logger        = $this->app->make('log');
-        $viewFactory   = $this->app->make('view');
-        $locale        = $this->app->make('lang')->getLocale();
-
-        $mailer = new Mailer($laravelMailer, $logger, $viewFactory, $message, $view, $data, $locale, $this->pretend);
-        $mailer
-            ->setCss($this->cssFile)
-            ->setQueueManager($this->queue);
+        $message = new Message(new Swift_Message);
+        $mailer  = new Mailer($this->swiftMailer, $this->filesystem, $this->viewFactory, $message, $view, $data, $this->defaultLocale, $this->pretend);
+        $mailer->setCss($this->cssFile)->setQueueManager($this->queueManager);
 
         if ($this->defaultFromAddress) {
             $mailer->from($this->defaultFromAddress, $this->defaultFromName);

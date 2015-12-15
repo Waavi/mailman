@@ -1,7 +1,6 @@
 <?php namespace Waavi\Mailman;
 
 use Illuminate\Filesystem\Filesystem;
-use Illuminate\Log\Writer as LogWriter;
 use Illuminate\Mail\Message;
 use Illuminate\Queue\QueueManager;
 use Illuminate\Translation\Translator;
@@ -16,12 +15,6 @@ class Mailer implements MailerContract, MailQueueContract
      *  @var Swift_Mailer
      */
     protected $mailer;
-
-    /**
-     *  Log Writer used when pretend is set to true.
-     *  @var Illuminate\Log\Writer
-     */
-    protected $logWriter;
 
     /**
      *  Laravel Filsystem
@@ -98,7 +91,6 @@ class Mailer implements MailerContract, MailQueueContract
      */
     public function __construct(
         Swift_Mailer $mailer,
-        LogWriter    $logWriter,
         Filesystem   $filesystem,
         Translator   $translator,
         ViewFactory  $viewFactory,
@@ -108,7 +100,6 @@ class Mailer implements MailerContract, MailQueueContract
                      $locale,
                      $pretend) {
         $this->mailer      = $mailer;
-        $this->logWriter   = $logWriter;
         $this->filesystem  = $filesystem;
         $this->translator  = $translator;
         $this->viewFactory = $viewFactory;
@@ -204,7 +195,7 @@ class Mailer implements MailerContract, MailQueueContract
     {
         $message = $message ?: $this->getMessageForSending();
 
-        return $this->prentend ? $this->logMessage($message) : $this->mailer->send($message);
+        return $this->prentend ? true : $this->mailer->send($message);
     }
 
     /**

@@ -5,7 +5,7 @@
 [![Build Status](https://img.shields.io/travis/Waavi/mailman/master.svg?style=flat-square)](https://travis-ci.org/Waavi/mailman)
 [![Total Downloads](https://img.shields.io/packagist/dt/waavi/mailman.svg?style=flat-square)](https://packagist.org/packages/waavi/mailman)
 
-## Email bundle for Laravel
+## Introduction
 
 Mailman has all of Laravel's Mail features, plus allows you to:
 

@@ -35,7 +35,7 @@ class MailmanServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->singleton('mailman', function ($app) {
-            return new MailerFactory($app);
+            return new MailerFactory($app['config'], $app['translator'], $app['files'], $app['queue'], $app['mailer']->getSwiftMailer(), $app['view']);
         });
     }
 
@@ -46,7 +46,7 @@ class MailmanServiceProvider extends ServiceProvider
      */
     public function provides()
     {
-        return [];
+        return ['mailman'];
     }
 
 }
