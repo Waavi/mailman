@@ -1,5 +1,5 @@
 <?php
 
 return [
-    'cssFile' => '/resources/css/email.css';
+    'cssFile' => '/resources/css/email.css',
 ];

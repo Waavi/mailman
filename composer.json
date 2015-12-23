@@ -18,10 +18,10 @@
     ],
     "require": {
         "tijsverkoyen/css-to-inline-styles": "1.*",
-        "illuminate/view": "5.0.x|5.1.x",
-        "illuminate/support": "5.0.x|5.1.x",
-        "illuminate/queue": "5.0.x|5.1.x",
-        "illuminate/mail": "5.0.x|5.1.x"
+        "illuminate/view": "5.1.x",
+        "illuminate/support": "5.1.x",
+        "illuminate/queue": "5.1.x",
+        "illuminate/mail": "5.1.x"
     },
     "require-dev": {
         "phpunit/phpunit" : "^4",

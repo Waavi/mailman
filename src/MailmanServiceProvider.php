@@ -20,10 +20,10 @@ class MailmanServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->publishes([
-            __DIR__ . '/../../resources/config/mailman.php' => config_path('mailman.php'),
+            __DIR__ . '/../config/mailman.php' => config_path('mailman.php'),
         ]);
         $this->mergeConfigFrom(
-            __DIR__ . '/../../resources/config/mailman.php', 'mailman'
+            __DIR__ . '/../config/mailman.php', 'mailman'
         );
     }
 

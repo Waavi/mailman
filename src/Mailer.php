@@ -1,14 +1,9 @@
 <?php namespace Waavi\Mailman;
 
-use Illuminate\Filesystem\Filesystem;
-use Illuminate\Mail\Message;
 use Illuminate\Queue\QueueManager;
-use Illuminate\Translation\Translator;
-use Illuminate\View\Factory as ViewFactory;
 use Swift_Mailer;
-use TijsVerkoyen\CssToInlineStyles\CssToInlineStyles as CssInline;
 
-class Mailer implements MailerContract, MailQueueContract
+class Mailer
 {
     /**
      *  Swift Mailer
@@ -17,195 +12,61 @@ class Mailer implements MailerContract, MailQueueContract
     protected $mailer;
 
     /**
-     *  Laravel Filsystem
-     *  @var Illuminate\Filesystem\Filesystem
-     */
-    protected $filesystem;
-
-    /**
-     *  Laravel Translator
-     *  @var Illuminate\Translation\Translator
-     */
-    protected $translator;
-
-    /**
-     *  Laravel View Factory
-     *  @var Illuminate\View\Factory
-     */
-    protected $viewFactory;
-
-    /**
-     *    The Message instance.
-     *    @var Illuminate\Mail\Message
+     *  The Message instance.
+     *  @var Message
      */
     protected $message;
 
     /**
-     * The queue manager instance.
+     *  The queue manager instance.
      *
-     * @var \Illuminate\Queue\QueueManager
+     *  @var \Illuminate\Queue\QueueManager
      */
     protected $queueManager;
-
-    /**
-     *    Css folder to use. By default this points to the folder specified in config.php
-     *    @var string
-     */
-    protected $cssFolder;
-
-    /**
-     *    Css file to use. By default this points to the file and folder specified in config.php
-     *    @var string
-     */
-    protected $cssFile;
-
-    /**
-     *  The view to load
-     *  @var string
-     */
-    protected $view;
-
-    /**
-     *    Data to render the email view.
-     *    @var array
-     */
-    protected $data = [];
-
-    /**
-     *    Selected locale for the email.
-     *    @var string(2)
-     */
-    protected $locale = null;
-
-    /**
-     * Indicates if the actual sending is disabled.
-     *
-     * @var bool
-     */
-    protected $prentend = false;
 
     /**
      *    Mailman constructor.
      *    @param \Illuminate\Foundation\Application $app
      *    @param string Path to the css file relative to the css folder as specified in config.php.
      */
-    public function __construct(
-        Swift_Mailer $mailer,
-        Filesystem   $filesystem,
-        Translator   $translator,
-        ViewFactory  $viewFactory,
-        Message      $message,
-                     $view,
-                     $data,
-                     $locale) {
-        $this->mailer      = $mailer;
-        $this->filesystem  = $filesystem;
-        $this->translator  = $translator;
-        $this->viewFactory = $viewFactory;
-        $this->message     = $message;
-        $this->view        = $view;
-        $this->data        = $data;
-        $this->locale      = $locale;
-    }
-
-    /**
-     * Add data to the view. Works just like Laravel's View::with
-     *
-     * @param  string|array     $key
-     * @param  mixed            $value
-     * @return \Illuminate\View\View
-     */
-    public function with($key, $value = null)
+    public function __construct(Swift_Mailer $mailer, Message $message)
     {
-        if (is_array($key)) {
-            $this->data = array_replace_recursive($this->data, $key);
-        } else {
-            $this->data[$key] = $value;
-        }
-        return $this;
+        $this->mailer  = $mailer;
+        $this->message = $message;
     }
 
     /**
-     *  Set the locale, by default the current locale will be used.
+     *  Set the queue manager instance.
      *
-     *  @param string $locale
-     *  @return App\Utils\Mailman current object instance, allows for method chaining.
-     */
-    public function setLocale($locale)
-    {
-        $this->locale = $locale;
-        return $this;
-    }
-
-    /**
-     *    Set the css file to use, relative to the css folder.
-     *
-     *    @param string   $cssPath     Css relative path inside the css folder.
-     *    @return Mailman Current object instance, allows for method chaining.
-     */
-    public function setCss($cssPath)
-    {
-        $this->cssFile = $cssPath;
-        return $this;
-    }
-
-    /**
-     *    Return the HTML representation of the email to be sent.
-     *
-     *    @return string
-     */
-    public function show()
-    {
-        // Set the email's locale:
-        $currentLocale = $this->translator->getLocale();
-        $locale        = $this->locale ?: $currentLocale;
-        $this->translator->setLocale($locale);
-
-        // Generate HTML:
-        $html    = $this->viewFactory->make($this->view, $this->data)->render();
-        $css     = $this->filesystem->get($this->cssFile);
-        $inliner = new CssInline($html, $css);
-        $body    = $inliner->convert();
-
-        // Return App locale to former value:
-        $this->translator->setLocale($currentLocale);
-
-        return $body;
-    }
-
-    /**
-     *    Get the Swift Message required to send an email.
-     *
-     *    @return Message
-     */
-    protected function getMessageForSending()
-    {
-        $message = $this->message->getSwiftMessage();
-        $message->setBody($this->show(), 'text/html');
-        return $message;
-    }
-
-    /**
-     *    Return the mail as html.
-     *    @return boolean
-     */
-    public function send($message = null)
-    {
-        $message = $message ?: $this->getMessageForSending();
-
-        return $this->prentend ? true : $this->mailer->send($message);
-    }
-
-    /**
-     * Set the queue manager instance.
-     *
-     * @param  \Illuminate\Queue\QueueManager  $queue
-     * @return \Illuminate\Mail\Mailer
+     *  @param  \Illuminate\Queue\QueueManager  $queue
+     *  @return self
      */
     public function setQueueManager(QueueManager $queueManager)
     {
         $this->queueManager = $queueManager;
         return $this;
+    }
+
+    /**
+     *  Return the HTML representation of the email to be sent.
+     *
+     *  @return string
+     */
+    public function show()
+    {
+        return $this->message->getBody();
+    }
+
+    /**
+     *  Send the email.
+     *
+     *  @param  Swift_Message   Optional
+     *  @return boolean
+     */
+    public function send()
+    {
+        $swiftMessage = $this->message->getSwiftMessage();
+        return $this->mailer->send($swiftMessage);
     }
 
     /**
@@ -217,7 +78,7 @@ class Mailer implements MailerContract, MailQueueContract
     public function queue($queue = null)
     {
         if ($this->queueManager) {
-            $this->queueManager->push('mailman@handleQueuedMessage', ['message' => serialize($this->getMessageForSending())], $queue);
+            $this->queueManager->push(new SendEmailJob($message->getSwiftMessage()), $queue);
         }
     }
 
@@ -229,7 +90,7 @@ class Mailer implements MailerContract, MailQueueContract
      */
     public function queueOn($queue)
     {
-        return $this->queueManager($queue);
+        return $this->queue($queue);
     }
 
     /**
@@ -242,7 +103,7 @@ class Mailer implements MailerContract, MailQueueContract
     public function later($delay, $queue = null)
     {
         if ($this->queueManager) {
-            $this->queueManager->later($delay, 'mailman@handleQueuedMessage', ['message' => serialize($this->getMessageForSending())], $queue);
+            $this->queueManager->later($delay, new SendEmailJob($message->getSwiftMessage()), $queue);
         }
     }
 
@@ -256,22 +117,6 @@ class Mailer implements MailerContract, MailQueueContract
     public function laterOn($queue, $delay)
     {
         return $this->later($delay, $queue);
-    }
-
-    /**
-     * Handle a queued e-mail message job.
-     *
-     * @param  \Illuminate\Queue\Jobs\Job  $job
-     * @param  array  $data
-     * @return void
-     */
-    public function handleQueuedMessage($job, $data)
-    {
-        if (is_array($data) && isset($data['message']) && $data['message']) {
-            $message = unserialize($data['message']);
-            $this->send($message);
-        }
-        $job->delete();
     }
 
     /**
