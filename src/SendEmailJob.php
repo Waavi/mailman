@@ -1,5 +1,7 @@
 <?php
 
+namespace Waavi\Mailman;
+
 use Illuminate\Contracts\Bus\SelfHandling;
 use Illuminate\Contracts\Mail\Mailer;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -29,6 +31,6 @@ class SendEmailJob implements SelfHandling, ShouldQueue
      */
     public function handle(Mailer $mailer)
     {
-        $mailer->send($this->message);
+        $mailer->getSwiftMailer()->send($this->message);
     }
 }

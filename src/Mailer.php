@@ -78,7 +78,8 @@ class Mailer
     public function queue($queue = null)
     {
         if ($this->queueManager) {
-            $this->queueManager->push(new SendEmailJob($message->getSwiftMessage()), $queue);
+            $swiftMessage = $this->message->getSwiftMessage();
+            $this->queueManager->push(new SendEmailJob($swiftMessage), $queue);
         }
     }
 
@@ -103,7 +104,8 @@ class Mailer
     public function later($delay, $queue = null)
     {
         if ($this->queueManager) {
-            $this->queueManager->later($delay, new SendEmailJob($message->getSwiftMessage()), $queue);
+            $swiftMessage = $this->message->getSwiftMessage();
+            $this->queueManager->later($delay, new SendEmailJob($swiftMessage), $queue);
         }
     }
 

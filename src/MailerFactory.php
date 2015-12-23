@@ -1,9 +1,10 @@
 <?php namespace Waavi\Mailman;
 
+use Illuminate\Config\Repository as Config;
+use Illuminate\Filesystem\Filesystem;
 use Illuminate\Queue\QueueManager;
 use Illuminate\Translation\Translator;
 use Illuminate\View\Factory as ViewFactory;
-use lluminate\Filesystem\Filesystem;
 use \Swift_Mailer;
 use \Swift_Message;
 
@@ -37,8 +38,8 @@ class MailerFactory
         $message->setView($view);
         $message->setData($data);
         $message->setCss($this->config->get('mailman.cssFile'));
-        $fromAddress = $config->get('mail.from.address');
-        $fromName    = $config->get('mail.from.name');
+        $fromAddress = $this->config->get('mail.from.address');
+        $fromName    = $this->config->get('mail.from.name');
         if ($fromAddress) {
             $message->from($fromAddress, $fromName);
         }

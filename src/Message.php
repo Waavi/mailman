@@ -150,7 +150,7 @@ class Message extends LaravelMessage
 
         // Generate HTML:
         $html    = $this->viewFactory->make($this->view, $this->data)->render();
-        $css     = $this->filesystem->get($this->cssFile);
+        $css     = $this->filesystem->get(base_path($this->cssFile));
         $inliner = new CssToInlineStyles($html, $css);
         $body    = $inliner->convert();
 
