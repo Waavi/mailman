@@ -10,8 +10,10 @@
 Mailman has all of Laravel's Mail features, plus allows you to:
 
 	- Keep your email css files in an external file, and automatically inline them when sending an email.
-	- To set the language in which the email should be sent
-	- Ease of use, avoiding an annoying use of callbacks for emails.
+	- Set the language in which the email should be sent, without affecting the rest of your application.
+	- Avoid the annoying use of callbacks.
+
+WAAVI is a web development studio based in Madrid, Spain. You can learn more about us at [waavi.com](http://waavi.com)
 
 ## Installation
 
@@ -29,13 +31,13 @@ Publish the configuration file:
 
 	php artisan vendor:publish
 
-In config/app.php, add the following entry to the providers array:
+In config/app.php, add the following entry to the end of the providers array:
 
 	\Waavi\Mailman\MailmanServiceProvider::class,
 
-And to the aliases array:
+And edit the aliases array to include:
 
-	'Mailman' => Waavi\Mailman\Facades\Facade::class,
+	'Mailman' => \Waavi\Mailman\Facades\Mailman::class,
 
 ## Usage
 
@@ -43,7 +45,7 @@ And to the aliases array:
 
 Usage is very similar to Laravel's Mail, with no callbacks needed. In fact, Mailman is expected to be used just like you use Views. Say you have an email view in views/emails/email. You may send the email by:
 
-	Mailman::make('emails.email')->to('william@waavi.com')->subject('test')->send();
+	Mailman::make('emails.email')->to('info@example.com')->subject('test')->send();
 
 The from address and general email configuration will be loaded from app/mail.php, whereas email stylesheet configuration is done through the mailman.php config file.
 
@@ -63,9 +65,9 @@ To set the locale in which the email should be sent, you may use the set locale 
 
 ### Setting the css file to use
 
-You may set a different css file than default. The parameter must be the full path relative to the email stylesheets folder:
+You may set a different css file than default. The parameter must be the full path relative to the base folder:
 
-	Mailman::make('emails.basic')->setCss('../assets/private.css')
+	Mailman::make('emails.basic')->setCss('resources/assets/css/private.css')
 
 ### Queue emails
 
@@ -78,7 +80,7 @@ You may queue emails just like with Laravel's Mail. To send an email through a q
 
 ### Fake sending email
 
-If you are using Laravel's Homestead, the recommend way would be to install [MailCatcher](http://blog.bobbyallen.me/2014/10/21/installing-mailcatcher-support-in-laravel-homestead/), however you can also set the pretend option to true in the mail.php config file.
+If you are using Laravel's Homestead, the recommend way would be to install [MailCatcher](http://blog.bobbyallen.me/2014/10/21/installing-mailcatcher-support-in-laravel-homestead/).
 
 ### Get the email as a string
 
