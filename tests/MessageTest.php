@@ -22,11 +22,10 @@ class MessageTest extends TestCase
      */
     public function it_returns_html()
     {
-        $swift       = Mockery::mock(Swift_Message::class);
         $viewFactory = Mockery::mock(ViewFactory::class);
         $filesystem  = Mockery::mock(Filesystem::class);
         $translator  = Mockery::mock(Translator::class);
-        $message     = new Message($swift, $viewFactory, $filesystem, $translator);
+        $message     = new Message(new Swift_Message, $viewFactory, $filesystem, $translator);
 
         $message->setView('view');
         $message->setCss('cssPath');
@@ -34,15 +33,13 @@ class MessageTest extends TestCase
         $translator->shouldReceive('getLocale')->andReturn('en');
 
         $viewFactory->shouldReceive('make')->with('view', [])->andReturn($viewFactory);
-        $viewFactory->shouldReceive('render')->andReturn('<h1>Hola</h1>');
+        $html = '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html><body><h1>Hola</h1></body></html>
+';
+        $viewFactory->shouldReceive('render')->andReturn($html);
 
-        $filesystem->shouldReceive('get')->with('cssPath')->andReturn('');
-
-        $body = $message->getBody();
-        $this->assertEquals(true, false);
-        dd('FUCK=');
-        $this->assertEquals('<h1>Hola</h1>', $body);
-
+        $filesystem->shouldReceive('get')->with(base_path('cssPath'))->andReturn('');
+        $this->assertEquals($html, $message->getBody());
     }
 
     /**
@@ -50,11 +47,10 @@ class MessageTest extends TestCase
      */
     public function it_inlines_css()
     {
-        $swift       = Mockery::mock(Swift_Message::class);
         $viewFactory = Mockery::mock(ViewFactory::class);
         $filesystem  = Mockery::mock(Filesystem::class);
         $translator  = Mockery::mock(Translator::class);
-        $message     = new Message($swift, $viewFactory, $filesystem, $translator);
+        $message     = new Message(new Swift_Message, $viewFactory, $filesystem, $translator);
 
         $message->setView('view');
         $message->setCss('cssPath');
@@ -64,9 +60,12 @@ class MessageTest extends TestCase
         $viewFactory->shouldReceive('make')->with('view', [])->andReturn($viewFactory);
         $viewFactory->shouldReceive('render')->andReturn('<h1>Hola</h1>');
 
-        $filesystem->shouldReceive('get')->with('cssPath')->andReturn('h1 { color: blue; }');
+        $filesystem->shouldReceive('get')->with(base_path('cssPath'))->andReturn('h1 { color: blue; }');
 
-        $this->assertEquals('<h1 style="color: blue">Hola</h1>', $message->getBody());
+        $html = '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html><body><h1 style="color: blue;">Hola</h1></body></html>
+';
+        $this->assertEquals($html, $message->getBody());
     }
 
     /**
@@ -74,11 +73,10 @@ class MessageTest extends TestCase
      */
     public function it_sets_locale()
     {
-        $swift       = Mockery::mock(Swift_Message::class);
         $viewFactory = Mockery::mock(ViewFactory::class);
         $filesystem  = Mockery::mock(Filesystem::class);
         $translator  = Mockery::mock(Translator::class);
-        $message     = new Message($swift, $viewFactory, $filesystem, $translator);
+        $message     = new Message(new Swift_Message, $viewFactory, $filesystem, $translator);
 
         $message->setView('view');
         $message->setCss('cssPath');
@@ -91,8 +89,11 @@ class MessageTest extends TestCase
         $viewFactory->shouldReceive('make')->with('view', [])->andReturn($viewFactory);
         $viewFactory->shouldReceive('render')->andReturn('<h1>Hola</h1>');
 
-        $filesystem->shouldReceive('get')->with('cssPath')->andReturn('h1 { color: blue; }');
+        $filesystem->shouldReceive('get')->with(base_path('cssPath'))->andReturn('h1 { color: blue; }');
 
-        $this->assertEquals('<h1 style="color: blue">Hola</h1>', $message->getBody());
+        $html = '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html><body><h1 style="color: blue;">Hola</h1></body></html>
+';
+        $this->assertEquals($html, $message->getBody());
     }
 }
