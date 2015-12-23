@@ -101,7 +101,7 @@ class Message extends LaravelMessage
      * @param  mixed            $value
      * @return self
      */
-    public function setData($key, $value = null)
+    public function with($key, $value = null)
     {
         if (is_array($key)) {
             $this->data = array_replace_recursive($this->data, $key);

@@ -36,7 +36,7 @@ class MailerFactory
     {
         $message = new Message(new Swift_Message, $this->viewFactory, $this->filesystem, $this->translator);
         $message->setView($view);
-        $message->setData($data);
+        $message->with($data);
         $message->setCss($this->config->get('mailman.cssFile'));
         $fromAddress = $this->config->get('mail.from.address');
         $fromName    = $this->config->get('mail.from.name');
