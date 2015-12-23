@@ -70,7 +70,6 @@ class MailerFactory
      */
     public function __construct(Config $config, Translator $translator, Filesystem $filesystem, QueueManager $queueManager, Swift_Mailer $swiftMailer, ViewFactory $viewFactory)
     {
-        $this->prented            = $config->get('mail.pretend');
         $this->cssFile            = $config->get('mailman.cssFile');
         $this->defaultFromAddress = $config->get('mail.from.address');
         $this->defaultFromName    = $config->get('mail.from.name');
@@ -92,7 +91,7 @@ class MailerFactory
     public function make($view, $data = null)
     {
         $message = new Message(new Swift_Message);
-        $mailer  = new Mailer($this->swiftMailer, $this->filesystem, $this->viewFactory, $message, $view, $data, $this->defaultLocale, $this->pretend);
+        $mailer  = new Mailer($this->swiftMailer, $this->filesystem, $this->viewFactory, $message, $view, $data, $this->defaultLocale);
         $mailer->setCss($this->cssFile)->setQueueManager($this->queueManager);
 
         if ($this->defaultFromAddress) {

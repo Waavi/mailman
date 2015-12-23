@@ -97,8 +97,7 @@ class Mailer implements MailerContract, MailQueueContract
         Message      $message,
                      $view,
                      $data,
-                     $locale,
-                     $pretend) {
+                     $locale) {
         $this->mailer      = $mailer;
         $this->filesystem  = $filesystem;
         $this->translator  = $translator;
@@ -107,7 +106,6 @@ class Mailer implements MailerContract, MailQueueContract
         $this->view        = $view;
         $this->data        = $data;
         $this->locale      = $locale;
-        $this->pretend     = $pretend;
     }
 
     /**
@@ -142,12 +140,12 @@ class Mailer implements MailerContract, MailQueueContract
     /**
      *    Set the css file to use, relative to the css folder.
      *
-     *    @param string   $css     Css relative path inside the css folder.
+     *    @param string   $cssPath     Css relative path inside the css folder.
      *    @return Mailman Current object instance, allows for method chaining.
      */
-    public function setCss($css)
+    public function setCss($cssPath)
     {
-        $this->cssFile = $css;
+        $this->cssFile = $cssPath;
         return $this;
     }
 
