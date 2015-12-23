@@ -6,7 +6,7 @@
         "laravel",
         "email",
         "mailman",
-        "mailer",
+        "mailer"
     ],
     "license": "MIT",
     "authors": [
