@@ -15,6 +15,15 @@ Mailman has all of Laravel's Mail features, plus allows you to:
 
 WAAVI is a web development studio based in Madrid, Spain. You can learn more about us at [waavi.com](http://waavi.com)
 
+## Laravel compatibility
+
+ Laravel  | translation
+:---------|:----------
+ 4.x  	  | 1.2.x
+ 5.0.x    | 2.0.x
+ 5.1.x    | 2.0.x
+ 5.2.x    | 2.0.2 and higher
+
 ## Installation
 
 Require through composer
