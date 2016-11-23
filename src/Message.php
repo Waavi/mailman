@@ -151,8 +151,8 @@ class Message extends LaravelMessage
         // Generate HTML:
         $html    = $this->viewFactory->make($this->view, $this->data)->render();
         $css     = $this->filesystem->get(base_path($this->cssFile));
-        $inliner = new CssToInlineStyles($html, $css);
-        $body    = $inliner->convert();
+        $inliner = new CssToInlineStyles();
+        $body    = $inliner->convert($html, $css);
 
         // Return App locale to former value:
         if ($this->locale && $this->locale != $appLocale) {

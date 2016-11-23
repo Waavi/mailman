@@ -34,8 +34,7 @@ class MessageTest extends TestCase
 
         $viewFactory->shouldReceive('make')->with('view', [])->andReturn($viewFactory);
         $html = '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
-<html><body><h1>Hola</h1></body></html>
-';
+<html><body><h1>Hola</h1></body></html>';
         $viewFactory->shouldReceive('render')->andReturn($html);
 
         $filesystem->shouldReceive('get')->with(base_path('cssPath'))->andReturn('');
@@ -63,8 +62,7 @@ class MessageTest extends TestCase
         $filesystem->shouldReceive('get')->with(base_path('cssPath'))->andReturn('h1 { color: blue; }');
 
         $html = '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
-<html><body><h1 style="color: blue;">Hola</h1></body></html>
-';
+<html><body><h1 style="color: blue;">Hola</h1></body></html>';
         $this->assertEquals($html, $message->getBody());
     }
 
@@ -92,8 +90,7 @@ class MessageTest extends TestCase
         $filesystem->shouldReceive('get')->with(base_path('cssPath'))->andReturn('h1 { color: blue; }');
 
         $html = '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
-<html><body><h1 style="color: blue;">Hola</h1></body></html>
-';
+<html><body><h1 style="color: blue;">Hola</h1></body></html>';
         $this->assertEquals($html, $message->getBody());
     }
 }
