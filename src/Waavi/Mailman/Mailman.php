@@ -193,16 +193,30 @@ class Mailman {
 	 *	Return the mail as html.
 	 *	@return boolean
 	 */
-	public function send($message = null)
+	public function send($message = null, $safe_mode = false, $host = '', $port = '')
 	{
 		$message = $message ?: $this->getMessageForSending();
         Event::fire('mailer.sending', array($message));
-		$mailer = App::make('mailer')->getSwiftMailer();
+
 		if($this->pretending){
 			return $this->logMessage($message);
 		} else {
-			$response = $mailer->send($message);
+			$mailer = App::make('mailer');
+
+			if ($safe_mode) {
+				$backup_mailer = $mailer->getSwiftMailer();
+				$safe_transport = \Swift_SmtpTransport::newInstance($host, $port, '');
+				$safe_mailer = new \Swift_Mailer($safe_transport);
+				$mailer->setSwiftMailer($safe_mailer);
+			} 
+			$sender = $mailer->getSwiftMailer();
+
+			$response = $sender->send($message);
 			Event::fire('mailer.sent', array($message, $response));
+
+			if ($safe_mode)
+				$mailer->setSwiftMailer($backup_mailer);
+
 			return $response;
 		}
 	}
